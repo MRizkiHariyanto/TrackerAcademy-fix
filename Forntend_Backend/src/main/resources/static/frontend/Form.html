@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login/Signup</title>
+
+
+
+
+  <link rel="stylesheet" href="assets/css/auth.css" />
+  <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"/>
+</head>
+
+<body>
+  <div class="auth">
+    <div class="back" style="filter: brightness(0) saturate(100%); margin-bottom: 40px; width: 75%;display: flex; justify-content: start;align-items: start;">
+      <a href="index.html"><img src="assets/img/back.png" alt="" width="30rem"></a>
+    </div>
+
+    <div class="container" id="container">
+
+      <!-- ✅ Sign Up -->
+      <div class="form-container sign-up-container" id="signupContainer">
+        <form id="signupForm">
+          <h3>Sign Up</h3>
+          <input name="username" type="text" placeholder="Username" required />
+          <input name="email" type="email" placeholder="Email" required />
+          <input name="password" type="password" placeholder="Password" required />
+          <button type="submit">Sign Up</button>
+        </form>
+      </div>
+
+      <!-- ✅ Sign In -->
+      <div class="form-container sign-in-container" id="signinContainer">
+        <form id="signinForm">
+          <h3>Sign in</h3>
+          <input name="username" type="text" placeholder="Username" required />
+          <input name="password" type="password" placeholder="Password" required />
+          <button type="submit">Sign In</button>
+        </form>
+      </div>
+
+      <!-- 🔁 Overlay Slider -->
+      <div class="overlay-container">
+        <div class="overlay">
+          <div class="overlay-panel overlay-left">
+            <h1>Welcome To</h1>
+            <img src="assets/img/logo.png" alt="" style="width: 12rem;">
+            <p>Belum punya akun?</p>
+            <button class="ghost" id="signIn">Sign Up</button>
+          </div>
+          <div class="overlay-panel overlay-right">
+            <h1>Welcome To</h1>
+            <img src="assets/img/logo.png" alt="" style="width: 12rem;">
+            <p>Sudah punya akun?</p>
+            <button class="ghost" id="signUp">Sign In</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <footer><img src="assets/img/logo.png" alt=""></footer>
+  </div>
+
+  <!-- ✅ Script -->
+ <script src="assets/js/auth.js"></script>
+ 
+</body>
+</html>

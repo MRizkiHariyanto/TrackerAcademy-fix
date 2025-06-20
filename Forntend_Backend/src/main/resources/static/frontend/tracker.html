@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Trackademic - IP Tracker</title>
+  <link href="bootstrap-5.0.2-dist/css/bootstrap.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      background: linear-gradient(0deg, rgba(151, 71, 255, 1) 0%, rgba(41, 0, 121, 1) 100%); 
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+    }
+    body {
+      overflow-x: hidden;
+      color: white;
+      padding: 20px;
+    }
+    .logo {
+      width: 13rem;
+      padding: 10px;
+    }
+    .title {
+      text-align: start;
+      background: linear-gradient(0deg, rgba(219, 144, 188, 1) 24%, rgba(186, 47, 128, 1) 100%);
+      background-clip: text;
+      color: transparent;
+      font-weight: bold;
+      font-size: 2.6rem;
+    }
+    .container {
+      min-height: 100vh;
+    }
+    .container-form {
+      background-color: white;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: -1px 3px 17px 3px rgba(215, 50, 168, 1);
+    }
+    .card-form {
+      background-color: white;
+      color: black;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+    .btn-primary {
+      border-radius: 10px;
+      background-color: #9747FF;
+      border: none;
+    }
+    .btn-primary:hover {
+      background-color: #8a2be2;
+    }
+    .btn-simpan-track {
+      height: 4rem;
+      width: 14rem;
+    }
+    .btn-danger {
+      border-radius: 10px;
+      background-color: #FF0000;
+    }
+    #ipkChart {
+      max-width: 300px;
+      max-height: 300px;
+    }
+    .header-table th {
+      color: white;
+      background-color: #9747FF;
+    }
+    table {
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      color: black;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <div class="container my-4">
+    <div class="row">
+      <div class="col-2 d-flex justify-content-end">
+        <a href="index.html"><img src="assets/img/back.png" alt="" style="width: 4rem;"></a>
+      </div>
+      <div class="col-10 d-flex justify-content-start">
+        <h2 class="text-center mb-5 fw-bold title">Ready to Track Your Academic Progress</h2>
+      </div>
+    </div>
+
+    <div class="row justify-content-center align-items-start">
+      <div class="col-md-6 mb-4 container-form">
+        <div class="mb-3">
+          <select class="form-select" id="semester">
+            <option value="" disabled selected hidden>Pilih Semester</option>
+            <option value="1">Semester 1</option>
+            <option value="2">Semester 2</option>
+            <option value="3">Semester 3</option>
+            <option value="4">Semester 4</option>
+            <option value="5">Semester 5</option>
+            <option value="6">Semester 6</option>
+            <option value="7">Semester 7</option>
+            <option value="8">Semester 8</option>
+          </select>
+        </div>
+        <div class="card-form mb-4">
+          <div class="mb-3">
+            <select class="form-select" id="matkul">
+              <option value="" disabled selected hidden>Pilih Mata Kuliah</option>
+            </select>
+          </div>
+          <div class="row">
+            <div class="mb-3 col-md-6">
+              <input type="number" class="form-control" id="sks" placeholder="SKS" />
+            </div>
+            <div class="col-md-6 mb-3">
+              <select class="form-select" id="nilai">
+                <option value="" disabled selected hidden>Nilai</option>
+                <option value="4">A</option>
+                <option value="3.5">AB</option>
+                <option value="3">B</option>
+                <option value="2.5">BC</option>
+                <option value="2">C</option>
+                <option value="1">D</option>
+                <option value="0">E</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-primary w-100" id="addBtn">Tambah Nilai</button>
+        </div>
+
+        <table class="table table-striped mb-4">
+          <thead class="header-table">
+            <tr>
+              <th>Mata Kuliah</th>
+              <th>SKS</th>
+              <th>Nilai</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+
+      <div class="col-md-4 d-flex flex-column align-items-center justify-content-center">
+        <canvas id="ipkChart"></canvas>
+        <button class="btn btn-primary btn-simpan-track mt-4" id="simpanBtn">Simpan Hasil Trackmu?</button>
+      </div>
+    </div>
+  </div>
+  <footer class="footer d-flex">
+    <img class="logo mx-auto" src="assets/img/logo.png" alt="">
+  </footer>
+
+  <script src="assets/js/tracker.js"></script>
+<script src="assets/js/guard.js"></script>
+
+</body>
+</html>
