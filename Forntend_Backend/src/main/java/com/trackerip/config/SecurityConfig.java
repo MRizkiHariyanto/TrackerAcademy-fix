@@ -1,7 +1,6 @@
 // src/main/java/com/trackerip/backend/config/SecurityConfig.java
 package com.trackerip.config;
 
-import com.trackerip.service.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,64 +14,77 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import com.trackerip.service.CustomUserDetailsService;
+
 @Configuration
 public class SecurityConfig {
 
-    @Autowired private JwtAuthenticationFilter jwtFilter;
-    @Autowired private CustomUserDetailsService userDetailsService;
+    @Autowired
+    private JwtAuthenticationFilter jwtFilter;
 
+    @Autowired
+    private CustomUserDetailsService userDetailsService;
+
+    // Provider untuk validasi login
     @Bean
     public DaoAuthenticationProvider authProvider() {
-        DaoAuthenticationProvider p = new DaoAuthenticationProvider();
-        p.setUserDetailsService(userDetailsService);
-        p.setPasswordEncoder(passwordEncoder());
-        return p;
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(userDetailsService);
+        provider.setPasswordEncoder(passwordEncoder());
+        return provider;
     }
 
     @Bean
     public SecurityFilterChain filter(HttpSecurity http) throws Exception {
 
-        /* 1. CSRF nonaktif utk H2 + Auth API saja */
-        http.csrf(c -> c.ignoringRequestMatchers("/h2-console/**", "/api/auth/**"));
+        // 1. Nonaktifkan CSRF untuk beberapa endpoint
+        http.csrf(csrf -> csrf.ignoringRequestMatchers(
+            "/h2-console/**",
+            "/api/auth/**",
+            "/api/tracker/**" // agar frontend bisa post IPK tanpa token
+        ));
 
-        /* 2. Header -> biar H2 bisa embed */
-        http.headers(h -> h.frameOptions(f -> f.disable()));
+        // 2. Izinkan frame untuk H2 Console (jika pakai)
+        http.headers(headers -> headers.frameOptions(frame -> frame.disable()));
 
-        /* 3. Authorize mapping */
+        // 3. Konfigurasi izin endpoint
         http.authorizeHttpRequests(auth -> auth
 
-                /* ---- PUBLIC ---- */
-                .requestMatchers(
-                        "/",                   /* root   */
-                        "/index.html",
-                        "/frontend/**",        /* semua static frontend */
-                        "/css/**", "/js/**",
-                        "/h2-console/**",
-                        "/api/auth/**"         /* signup / login */
-                ).permitAll()
+            // ======== PUBLIC =========
+            .requestMatchers(
+                "/", "/index.html",
+                "/frontend/**",          // folder frontend kamu
+                "/css/**", "/js/**",
+                "/favicon.ico",
+                "/h2-console/**",
+                "/api/auth/**",          // login & signup
+                "/api/tracker/**"        // <- dibuka untuk simpan IPK tanpa token
+            ).permitAll()
 
-                /* ---- PROTECTED ---- */
-                .requestMatchers(
-                        "/api/tracker/**",
-                        "/api/modules/**"
-                ).authenticated()
+            // ======== PROTECTED =========
+            .requestMatchers("/api/modules/**").authenticated()
 
-                /* deny yang tak terdaftar */
-                .anyRequest().denyAll()
+            // ======== LAINNYA =========
+            .anyRequest().denyAll()
         );
 
-        /* 4. Stateless + filter JWT */
-        http.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authenticationProvider(authProvider())
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+        // 4. Stateless + JWT filter
+        http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+        http.authenticationProvider(authProvider());
+        http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
+    // Manager untuk autentikasi login
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration cfg)
-            throws Exception { return cfg.getAuthenticationManager(); }
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
 
+    // Encoder password untuk login
     @Bean
-    public PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(); }
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 }
