@@ -1,18 +1,24 @@
 package com.trackerip.controller;
 
-import com.trackerip.model.User;
-import com.trackerip.service.UserService;
-import com.trackerip.service.JwtService;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.HashMap;
-import java.util.Map;
+import com.trackerip.model.User;
+import com.trackerip.service.JwtService;
+import com.trackerip.service.UserService;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -51,7 +57,7 @@ public class AuthController {
             res.put("username",user.getUsername());
             res.put("token",token);
             res.put("message","Login berhasil!");
-        }catch(Exception e){
+        }catch(AuthenticationException e){
             res.put("status","error");
             res.put("message","Username atau password salah!");
         }

@@ -1,4 +1,3 @@
-// ================== TRACKER PAGE ====================
 const mataKuliahPerSemester = {
   1: ["Pengantar Teknologi Informasi", "Logika Matematika", "Bahasa Inggris", "Pendidikan Agama", "Pengantar Bisnis"],
   2: ["Matematika Diskrit", "Pemrograman Dasar", "Statistik Dasar", "Sistem Informasi Manajemen", "Kewarganegaraan"],
@@ -130,11 +129,18 @@ simpanBtn.addEventListener("click", async function () {
     matkul: dataMatkul
   };
 
+  const token = localStorage.getItem("token");
+  if (!token) {
+    alert("Kamu harus login untuk menyimpan data.");
+    return;
+  }
+
   try {
     const res = await fetch("http://localhost:8080/api/tracker/simpan", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
       },
       body: JSON.stringify(payload)
     });

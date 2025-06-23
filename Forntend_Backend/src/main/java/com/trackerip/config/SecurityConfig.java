@@ -25,7 +25,7 @@ public class SecurityConfig {
     @Autowired
     private CustomUserDetailsService userDetailsService;
 
-    // Provider untuk validasi login
+    // Provider autentikasi
     @Bean
     public DaoAuthenticationProvider authProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
@@ -37,38 +37,43 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filter(HttpSecurity http) throws Exception {
 
-        // 1. Nonaktifkan CSRF untuk beberapa endpoint
-        http.csrf(csrf -> csrf.ignoringRequestMatchers(
-            "/h2-console/**",
-            "/api/auth/**",
-            "/api/tracker/**" // agar frontend bisa post IPK tanpa token
-        ));
+        // 1. Nonaktifkan CSRF hanya untuk endpoint publik
+        http.csrf(csrf -> csrf
+            .ignoringRequestMatchers(
+                "/h2-console/**",
+                "/api/auth/**",
+                "/api/tracker/simpan"  // hanya simpan yang public
+            )
+        );
 
-        // 2. Izinkan frame untuk H2 Console (jika pakai)
+        // 2. Izinkan akses frame H2 console
         http.headers(headers -> headers.frameOptions(frame -> frame.disable()));
 
-        // 3. Konfigurasi izin endpoint
-        http.authorizeHttpRequests(auth -> auth
+        // 3. Konfigurasi akses endpoint
+http.authorizeHttpRequests(auth -> auth
 
-            // ======== PUBLIC =========
+            // PUBLIC
             .requestMatchers(
                 "/", "/index.html",
-                "/frontend/**",          // folder frontend kamu
-                "/css/**", "/js/**",
-                "/favicon.ico",
+                "/frontend/**",
+                "/css/**", "/js/**", "/favicon.ico",
                 "/h2-console/**",
-                "/api/auth/**",          // login & signup
-                "/api/tracker/**"        // <- dibuka untuk simpan IPK tanpa token
+                "/api/auth/**",
+                "/api/tracker/simpan"
             ).permitAll()
 
-            // ======== PROTECTED =========
-            .requestMatchers("/api/modules/**").authenticated()
+            // PROTECTED (hanya bisa diakses jika login)
+            .requestMatchers(
+                "/api/tracker/semua",
+                "/api/tracker/hapus/**",
+                "/api/tracker/history"
+            ).authenticated()
 
-            // ======== LAINNYA =========
+            // LAINNYA
             .anyRequest().denyAll()
         );
 
-        // 4. Stateless + JWT filter
+        // 4. Gunakan JWT (stateless)
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         http.authenticationProvider(authProvider());
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
@@ -76,13 +81,13 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // Manager untuk autentikasi login
+    // Manager untuk login
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
-    // Encoder password untuk login
+    // Password encoder
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

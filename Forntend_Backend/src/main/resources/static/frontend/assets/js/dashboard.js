@@ -2,6 +2,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const dropdownMenu = document.getElementById("dropdownMenu");
   const token = localStorage.getItem("token");
 
+  // Update dropdown menu sesuai status login
   if (dropdownMenu) {
     if (token) {
       dropdownMenu.innerHTML = `
@@ -16,6 +17,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+  // Logout
   document.addEventListener("click", function (e) {
     if (e.target?.id === "logoutBtn") {
       e.preventDefault();
@@ -26,29 +28,42 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  // Panggil setelah semua siap
+  // Load data history IPK
   loadHistory();
 
   async function loadHistory() {
+    const container = document.getElementById("card-container");
+    container.innerHTML = "";
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Silakan login terlebih dahulu.");
+      window.location.href = "/frontend/form.html";
+      return;
+    }
+
     try {
-      const res = await fetch("http://localhost:8080/api/tracker/history", {
+      const res = await fetch("http://localhost:8080/api/tracker/semua", {
         headers: {
-          Authorization: "Bearer " + localStorage.getItem("token")
+          Authorization: "Bearer " + token
         }
       });
-      const data = await res.json();
 
-      const container = document.getElementById("card-container");
-      container.innerHTML = "";
+      if (!res.ok) throw new Error("Gagal mengambil data.");
+
+      const data = await res.json();
+      if (data.length === 0) return;
 
       let total = 0;
       data.forEach((item) => {
         total += item.ipk;
         container.innerHTML += `
-          <div class="card shadow card-ipk text-center p-3">
+          <div class="card shadow card-ipk text-center p-3" style="display: none;">
             <div class="d-flex justify-content-between align-items-start">
               <h6>Semester ${item.semester}</h6>
-              <button onclick="hapus(${item.id})" class="btn btn-sm btn-link text-danger p-0"><i class="bi bi-trash-fill"></i></button>
+              <button onclick="hapus(${item.id})" class="btn btn-sm btn-link text-danger p-0">
+                <i class="bi bi-trash-fill"></i>
+              </button>
             </div>
             <div class="chart-wrapper mt-2">
               <canvas class="chart-donut" data-ipk="${item.ipk}"></canvas>
@@ -104,4 +119,19 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     });
   }
+
+  // Tombol REVEAL IPK
+  window.handleReveal = function () {
+    const cards = document.querySelectorAll(".card-ipk");
+    if (cards.length === 0) {
+      alert("Belum ada data IPK untuk ditampilkan.");
+      return;
+    }
+
+    cards.forEach(card => {
+      card.style.display = "block";
+    });
+
+    document.getElementById("card-container").scrollIntoView({ behavior: "smooth" });
+  };
 });
