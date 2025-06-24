@@ -1,24 +1,22 @@
-document.addEventListener("DOMContentLoaded", function () {
-  const dropdownMenu = document.getElementById("dropdownMenu");
+document.addEventListener("DOMContentLoaded", () => {
   const token = localStorage.getItem("token");
 
-  // Update dropdown menu sesuai status login
+  // Update dropdown menu berdasarkan login status
+  const dropdownMenu = document.getElementById("dropdownMenu");
   if (dropdownMenu) {
-    if (token) {
-      dropdownMenu.innerHTML = `
+    dropdownMenu.innerHTML = token
+      ? `
         <li><a class="dropdown-item" href="#">Profile</a></li>
         <li><a class="dropdown-item" href="#" id="logoutBtn">Logout</a></li>
-      `;
-    } else {
-      dropdownMenu.innerHTML = `
+      `
+      : `
         <li><a class="dropdown-item" href="Form.html">Login</a></li>
         <li><a class="dropdown-item" href="Form.html">Sign Up</a></li>
       `;
-    }
   }
 
-  // Logout
-  document.addEventListener("click", function (e) {
+  // Logout handler
+  document.addEventListener("click", (e) => {
     if (e.target?.id === "logoutBtn") {
       e.preventDefault();
       localStorage.removeItem("token");
@@ -28,110 +26,105 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  // Load data history IPK
-  loadHistory();
+  // Jalankan hanya di halaman history
+  if (window.location.pathname.includes("history.html")) {
+    const chart = document.getElementById("ipkChartSection");
+    const cards = document.getElementById("card-container");
+    chart.style.display = "none";
+    cards.style.display = "none";
+  }
+});
 
-  async function loadHistory() {
-    const container = document.getElementById("card-container");
-    container.innerHTML = "";
+function handleReveal() {
+  const cardSection = document.getElementById("card-container");
+  const chartSection = document.getElementById("ipkChartSection");
 
-    const token = localStorage.getItem("token");
-    if (!token) {
-      alert("Silakan login terlebih dahulu.");
-      window.location.href = "/frontend/form.html";
-      return;
-    }
+  cardSection.style.display = "flex";
+  chartSection.style.display = "block";
 
-    try {
-      const res = await fetch("http://localhost:8080/api/tracker/semua", {
-        headers: {
-          Authorization: "Bearer " + token
-        }
-      });
+  cardSection.classList.add("fade-in");
+  chartSection.classList.add("fade-in");
 
-      if (!res.ok) throw new Error("Gagal mengambil data.");
+  loadHistoryIPK(); // Fetch data after reveal
+}
 
-      const data = await res.json();
-      if (data.length === 0) return;
-
-      let total = 0;
-      data.forEach((item) => {
-        total += item.ipk;
-        container.innerHTML += `
-          <div class="card shadow card-ipk text-center p-3" style="display: none;">
-            <div class="d-flex justify-content-between align-items-start">
-              <h6>Semester ${item.semester}</h6>
-              <button onclick="hapus(${item.id})" class="btn btn-sm btn-link text-danger p-0">
-                <i class="bi bi-trash-fill"></i>
-              </button>
-            </div>
-            <div class="chart-wrapper mt-2">
-              <canvas class="chart-donut" data-ipk="${item.ipk}"></canvas>
-              <div class="chart-value">${item.ipk.toFixed(2)}</div>
-            </div>
-            <button onclick="lihatStatistik(${item.semester})" class="btn btn-sm mt-2" style="background-color: #ff5cb1; color: white;">Check</button>
-          </div>
-        `;
-      });
-
-      renderDonut(document.querySelectorAll(".chart-donut"));
-      window._dataIPK = data;
-      window._avgIPK = data.length ? (total / data.length).toFixed(2) : "0.00";
-    } catch (err) {
-      console.error("Gagal memuat data:", err);
-    }
+function loadHistoryIPK() {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    alert("Silakan login terlebih dahulu.");
+    window.location.href = "login.html";
+    return;
   }
 
-  async function hapus(id) {
-    if (!confirm("Hapus data ini?")) return;
-    await fetch(`http://localhost:8080/api/tracker/hapus/${id}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: "Bearer " + localStorage.getItem("token")
+  fetch("http://localhost:8080/api/tracker/history", {
+    headers: {
+      Authorization: "Bearer " + token,
+    },
+  })
+    .then((res) => {
+      if (!res.ok) throw new Error("Gagal mengambil data. Cek server!");
+      return res.json();
+    })
+    .then((data) => {
+      if (!Array.isArray(data) || data.length === 0) {
+        alert("Belum ada data IPK tersimpan.");
+        return;
       }
+      tampilkanKartuHistory(data);
+      tampilkanChartIPK(data);
+    })
+    .catch((err) => {
+      console.error("Error fetching history:", err);
+      alert("Terjadi kesalahan saat mengambil data.");
     });
-    loadHistory();
-  }
+}
 
-  function lihatStatistik(semester) {
-    window.location.href = `statistik.html?semester=${semester}`;
-  }
+function tampilkanKartuHistory(data) {
+  const container = document.getElementById("card-container");
+  if (!container) return;
 
-  function renderDonut(canvasList) {
-    canvasList.forEach(canvas => {
-      const ipk = parseFloat(canvas.dataset.ipk);
-      new Chart(canvas, {
-        type: "doughnut",
-        data: {
-          datasets: [{
-            data: [ipk, 4 - ipk],
-            backgroundColor: ["#e91e63", "#f8bbd0"],
-            borderWidth: 0
-          }]
-        },
-        options: {
-          cutout: "70%",
-          plugins: {
-            legend: { display: false },
-            tooltip: { enabled: false }
+  container.innerHTML = "";
+  data.forEach((record) => {
+    const card = document.createElement("div");
+    card.className = "card card-ipk text-white bg-purple p-3 text-center m-2 fade-in";
+    card.innerHTML = `
+      <h5 class="fw-bold">Semester ${record.semester}</h5>
+      <p class="fs-5">IPK: ${record.ipk}</p>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function tampilkanChartIPK(data) {
+  const ctx = document.getElementById("ipkChart")?.getContext("2d");
+  if (!ctx) return;
+
+  const labels = data.map((r) => `Semester ${r.semester}`);
+  const values = data.map((r) => r.ipk);
+
+  new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        label: "IPK per Semester",
+        data: values,
+        backgroundColor: "rgba(54, 162, 235, 0.6)",
+        borderColor: "rgba(54, 162, 235, 1)",
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 4,
+          ticks: {
+            stepSize: 0.5
           }
         }
-      });
-    });
-  }
-
-  // Tombol REVEAL IPK
-  window.handleReveal = function () {
-    const cards = document.querySelectorAll(".card-ipk");
-    if (cards.length === 0) {
-      alert("Belum ada data IPK untuk ditampilkan.");
-      return;
+      }
     }
-
-    cards.forEach(card => {
-      card.style.display = "block";
-    });
-
-    document.getElementById("card-container").scrollIntoView({ behavior: "smooth" });
-  };
-});
+  });
+}

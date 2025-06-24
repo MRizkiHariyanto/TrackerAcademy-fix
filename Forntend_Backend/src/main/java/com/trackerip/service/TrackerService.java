@@ -12,6 +12,8 @@ import com.trackerip.model.User;
 import com.trackerip.repository.TrackRecordRepository;
 import com.trackerip.repository.UserRepository;
 
+import jakarta.transaction.Transactional;
+
 @Service
 public class TrackerService {
 
@@ -24,14 +26,10 @@ public class TrackerService {
     }
 
     public TrackRecord save(TrackRequest request) {
-        // Ambil username dari token JWT (dari SecurityContext)
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
-
-        // Ambil user dari database
         User user = userRepository.findByUsername(username).orElseThrow();
 
-        // Simpan data IPK dengan kaitan ke user
         TrackRecord record = new TrackRecord();
         record.setSemester(request.getSemester());
         record.setIpk(Double.parseDouble(request.getIpk()));
@@ -41,13 +39,17 @@ public class TrackerService {
         return repository.save(record);
     }
 
+    @Transactional  // ⛏️ penting agar koleksi matkul tidak gagal saat dikonversi ke JSON
     public List<TrackRecord> getAll() {
-        // Ambil user login saat ini
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
         User user = userRepository.findByUsername(username).orElseThrow();
 
-        // Ambil semua IPK milik user ini saja
         return repository.findByUser(user);
+    }
+
+    @Transactional  // ⛏️ untuk endpoint /history yang akses via username
+    public List<TrackRecord> getAllTrackRecordsByUsername(String username) {
+        return repository.findByUserUsername(username);
     }
 }

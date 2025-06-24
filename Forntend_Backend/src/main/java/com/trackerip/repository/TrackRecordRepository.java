@@ -11,4 +11,6 @@ import com.trackerip.model.User;
 @Repository
 public interface TrackRecordRepository extends JpaRepository<TrackRecord, Long> {
     List<TrackRecord> findByUser(User user); // ⬅️ Tambahkan method ini
+    List<TrackRecord> findByUserUsername(String username);
+
 }

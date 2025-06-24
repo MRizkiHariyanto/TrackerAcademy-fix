@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -30,37 +32,45 @@ public class AuthController {
     @Autowired private JwtService jwtService;
     @Autowired private AuthenticationManager authManager;
 
+    // ========== SIGNUP ==========
     @PostMapping("/signup")
-    public Map<String,Object> signup(@RequestBody User u){
-        Map<String,Object> res = new HashMap<>();
-        if(userService.findByUsername(u.getUsername()).isPresent()){
-            res.put("status","error"); res.put("message","Username already taken!"); return res;
+    public ResponseEntity<Map<String, Object>> signup(@RequestBody User u) {
+        Map<String, Object> res = new HashMap<>();
+
+        if (userService.findByUsername(u.getUsername()).isPresent()) {
+            res.put("message", "Username sudah digunakan!");
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(res); // 409 Conflict
         }
-        if(userService.findByEmail(u.getEmail()).isPresent()){
-            res.put("status","error"); res.put("message","Email already registered!"); return res;
+        if (userService.findByEmail(u.getEmail()).isPresent()) {
+            res.put("message", "Email sudah terdaftar!");
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(res); // 409 Conflict
         }
+
         u.setPassword(passwordEncoder.encode(u.getPassword()));
         userService.save(u);
-        res.put("status","success"); res.put("message","Signup berhasil!");
-        return res;
+
+        res.put("message", "Signup berhasil!");
+        return ResponseEntity.status(HttpStatus.CREATED).body(res); // 201 Created
     }
 
+    // ========== LOGIN ==========
     @PostMapping("/login")
-    public Map<String,Object> login(@RequestBody User req){
-        Map<String,Object> res = new HashMap<>();
-        try{
+    public ResponseEntity<Map<String, Object>> login(@RequestBody User req) {
+        Map<String, Object> res = new HashMap<>();
+        try {
             Authentication auth = authManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(req.getUsername(),req.getPassword()));
+                new UsernamePasswordAuthenticationToken(req.getUsername(), req.getPassword())
+            );
+
             UserDetails user = (UserDetails) auth.getPrincipal();
             String token = jwtService.generateToken(user);
-            res.put("status","success");
-            res.put("username",user.getUsername());
-            res.put("token",token);
-            res.put("message","Login berhasil!");
-        }catch(AuthenticationException e){
-            res.put("status","error");
-            res.put("message","Username atau password salah!");
+
+            res.put("username", user.getUsername());
+            res.put("token", token);
+            return ResponseEntity.ok(res); // 200 OK
+        } catch (AuthenticationException e) {
+            res.put("message", "Username atau password salah!");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(res); // 401 Unauthorized
         }
-        return res;
     }
 }

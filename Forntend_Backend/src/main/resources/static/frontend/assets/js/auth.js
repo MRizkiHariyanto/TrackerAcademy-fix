@@ -54,17 +54,18 @@ document.addEventListener("DOMContentLoaded", function () {
           body: JSON.stringify(payload),
         });
 
-        // 🔒 Cek apakah respons valid JSON
         if (res.ok && res.headers.get("content-type")?.includes("application/json")) {
           const result = await res.json();
+          console.log("Login result:", result); // DEBUG: lihat tokennya
 
-          if (result.status === "success") {
-            localStorage.setItem("username", result.username);
+          if (result.token) {
+            // ✅ Simpan token ke localStorage untuk akses backend
             localStorage.setItem("token", result.token);
+            localStorage.setItem("username", result.username || payload.username);
             alert("Login sukses!");
             window.location.href = "index.html";
           } else {
-            alert(result.message || "Login gagal.");
+            alert(result.message || "Login gagal. Token tidak ditemukan.");
           }
         } else {
           alert("Login gagal. Server tidak merespons dengan benar.");
@@ -97,4 +98,3 @@ document.addEventListener("DOMContentLoaded", function () {
   signUpButton?.addEventListener("click", showSignUp);
   signInButton?.addEventListener("click", showSignIn);
 });
-

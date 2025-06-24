@@ -1,20 +1,23 @@
 package com.trackerip.config;
 
-import com.trackerip.service.JwtService;
-import com.trackerip.service.CustomUserDetailsService;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import java.io.IOException;
+import com.trackerip.service.CustomUserDetailsService;
+import com.trackerip.service.JwtService;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -36,16 +39,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = header.substring(7);
         String username = jwtService.extractUsername(token);
+        System.out.println("📦 JWT username: " + username); // ✅ Log 1
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            var userDetails = userDetailsService.loadUserByUsername(username);
-            if (jwtService.validateToken(token, userDetails)) {
-                var auth = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
-                auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(req));
-                SecurityContextHolder.getContext().setAuthentication(auth);
+            try {
+                var userDetails = userDetailsService.loadUserByUsername(username);
+                System.out.println("✅ UserDetails loaded: " + userDetails.getUsername()); // ✅ Log 2
+
+                if (jwtService.isTokenValid(token, userDetails)) {
+                    var auth = new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities());
+                    auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(req));
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                    System.out.println("🔐 Authentication set for user: " + username); // ✅ Log 3
+                } else {
+                    System.out.println("❌ Token tidak valid untuk user: " + username); // Debug gagal token
+                }
+
+            } catch (UsernameNotFoundException e) {
+                System.out.println("❌ User tidak ditemukan: " + username);
+            } catch (Exception e) {
+                System.out.println("❌ Error saat load user: " + e.getMessage());
             }
         }
+
         chain.doFilter(req, res);
     }
 }

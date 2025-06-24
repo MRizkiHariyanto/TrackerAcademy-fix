@@ -1,19 +1,22 @@
 package com.trackerip.service;
 
-import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.Keys;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Service;
-
-import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.function.Function;
 
+import javax.crypto.SecretKey;
+
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Service;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
+
 @Service
 public class JwtService {
 
-    // ≥ 32 chars
     private static final String SECRET = "secret-key-tracker-academy-min-32-char";
     private final SecretKey key = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
 
@@ -21,7 +24,7 @@ public class JwtService {
         return extractClaim(token, Claims::getSubject);
     }
 
-    public <T> T extractClaim(String token, Function<Claims,T> resolver) {
+    public <T> T extractClaim(String token, Function<Claims, T> resolver) {
         return resolver.apply(
                 Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody()
         );
@@ -40,7 +43,8 @@ public class JwtService {
                 .compact();
     }
 
-    public boolean validateToken(String token, UserDetails user) {
-        return user.getUsername().equals(extractUsername(token)) && !isExpired(token);
+    // ✅ Ganti nama method ini:
+    public boolean isTokenValid(String token, UserDetails userDetails) {
+        return userDetails.getUsername().equals(extractUsername(token)) && !isExpired(token);
     }
 }
