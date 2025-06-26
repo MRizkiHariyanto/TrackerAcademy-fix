@@ -66,7 +66,8 @@ http.authorizeHttpRequests(auth -> auth
             .requestMatchers(
                 "/api/tracker/semua",
                 "/api/tracker/hapus/**",
-                "/api/tracker/history"
+                "/api/tracker/history",
+                "/api/tracker/statistik"
             ).authenticated()
 
             // LAINNYA

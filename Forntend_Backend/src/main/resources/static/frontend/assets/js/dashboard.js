@@ -29,23 +29,16 @@ document.addEventListener("DOMContentLoaded", () => {
   // Jalankan hanya di halaman history
   if (window.location.pathname.includes("history.html")) {
     const chart = document.getElementById("ipkChartSection");
-    const cards = document.getElementById("card-container");
     chart.style.display = "none";
-    cards.style.display = "none";
   }
 });
 
 function handleReveal() {
-  const cardSection = document.getElementById("card-container");
   const chartSection = document.getElementById("ipkChartSection");
-
-  cardSection.style.display = "flex";
   chartSection.style.display = "block";
-
-  cardSection.classList.add("fade-in");
   chartSection.classList.add("fade-in");
 
-  loadHistoryIPK(); // Fetch data after reveal
+  loadHistoryIPK();
 }
 
 function loadHistoryIPK() {
@@ -70,7 +63,7 @@ function loadHistoryIPK() {
         alert("Belum ada data IPK tersimpan.");
         return;
       }
-      tampilkanKartuHistory(data);
+      tampilkanCardDonutIPK(data);
       tampilkanChartIPK(data);
     })
     .catch((err) => {
@@ -79,24 +72,85 @@ function loadHistoryIPK() {
     });
 }
 
-function tampilkanKartuHistory(data) {
+function tampilkanCardDonutIPK(data) {
   const container = document.getElementById("card-container");
   if (!container) return;
-
   container.innerHTML = "";
-  data.forEach((record) => {
+
+  data.forEach((record, index) => {
     const card = document.createElement("div");
-    card.className = "card card-ipk text-white bg-purple p-3 text-center m-2 fade-in";
+    card.className = "ipk-card text-center";
+    card.id = `ipk-card-${record.id}`; // ID untuk nanti dihapus dari DOM
+
     card.innerHTML = `
-      <h5 class="fw-bold">Semester ${record.semester}</h5>
-      <p class="fs-5">IPK: ${record.ipk}</p>
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 class="fw-bold mb-0">Semester ${record.semester}</h5>
+        <button class="btn text-danger p-0 delete-btn" data-id="${record.id}"><i class="bi bi-trash-fill fs-5"></i></button>
+      </div>
+      <div class="donut-container">
+        <canvas id="donutChart-${index}"></canvas>
+        <div class="donut-label">${record.ipk.toFixed(2)}</div>
+      </div>
+      <a href="statistik.html?semester=${record.semester}"><button class="btn btn-pink fw-bold w-100 mt-3">Lihat Statistik</button></a>
     `;
+
     container.appendChild(card);
+
+    // Render Chart
+    const ctx = document.getElementById(`donutChart-${index}`).getContext("2d");
+    new Chart(ctx, {
+      type: "doughnut",
+      data: {
+        labels: ["IPK", "Sisa"],
+        datasets: [{
+          data: [record.ipk, 4 - record.ipk],
+          backgroundColor: ["#e238a1", "#f0f0f0"],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        cutout: "70%",
+        plugins: {
+          legend: { display: false },
+          tooltip: { enabled: false }
+        }
+      }
+    });
+  });
+  function hapusIPK(id) {
+    const token = localStorage.getItem("token");
+  
+    fetch(`http://localhost:8080/api/tracker/history/${id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: "Bearer " + token,
+      }
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Gagal menghapus IPK.");
+        document.getElementById(`ipk-card-${id}`)?.remove(); // Hapus dari DOM
+      })
+      .catch((err) => {
+        console.error("Gagal hapus:", err);
+        alert("Terjadi kesalahan saat menghapus IPK.");
+      });
+  }
+  
+
+  const deleteButtons = document.querySelectorAll(".delete-btn");
+  deleteButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.id;
+      if (confirm("Yakin ingin menghapus IPK ini?")) {
+        hapusIPK(id);
+      }
+    });
   });
 }
 
+
 function tampilkanChartIPK(data) {
-  const ctx = document.getElementById("ipkChart")?.getContext("2d");
+  const ctx = document.getElementById("ipkBarChart")?.getContext("2d");
   if (!ctx) return;
 
   const labels = data.map((r) => `Semester ${r.semester}`);
@@ -116,6 +170,12 @@ function tampilkanChartIPK(data) {
     },
     options: {
       responsive: true,
+      plugins: {
+        title: {
+          display: true,
+          text: "Grafik IPK per Semester (Bar)"
+        }
+      },
       scales: {
         y: {
           beginAtZero: true,

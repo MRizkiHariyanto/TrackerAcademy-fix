@@ -1,14 +1,19 @@
 package com.trackerip.service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import com.trackerip.model.MataKuliah;
 import com.trackerip.model.TrackRecord;
 import com.trackerip.model.TrackRequest;
 import com.trackerip.model.User;
+import com.trackerip.repository.MataKuliahRepository;
 import com.trackerip.repository.TrackRecordRepository;
 import com.trackerip.repository.UserRepository;
 
@@ -16,6 +21,11 @@ import jakarta.transaction.Transactional;
 
 @Service
 public class TrackerService {
+    @Autowired
+    private TrackRecordRepository trackRecordRepo;
+
+    @Autowired
+    private MataKuliahRepository mataKuliahRepo;
 
     private final TrackRecordRepository repository;
     private final UserRepository userRepository;
@@ -52,4 +62,33 @@ public class TrackerService {
     public List<TrackRecord> getAllTrackRecordsByUsername(String username) {
         return repository.findByUserUsername(username);
     }
+
+    public Map<String, Object> getStatistikBySemester(int semester) {
+    Long userId = 1L; // sementara hardcoded dulu
+
+    TrackRecord tr = trackRecordRepo.findBySemesterAndUserId(semester, userId)
+        .orElseThrow(() -> new RuntimeException("Track record tidak ditemukan"));
+
+    List<MataKuliah> matkulList = mataKuliahRepo.findByTrackRecordId(tr.getId());
+
+    double totalNilai = 0;
+    int totalSks = 0;
+    for (MataKuliah mk : matkulList) {
+        totalNilai += mk.getNilai() * mk.getSks();
+        totalSks += mk.getSks();
+    }
+
+    double ipk = (totalSks > 0) ? totalNilai / totalSks : 0;
+
+    Map<String, Object> result = new HashMap<>();
+    result.put("ipk", ipk);
+    result.put("matkul", matkulList.stream().map(mk -> Map.of(
+        "nama", mk.getMatkul(),
+        "nilai", mk.getNilai()
+    )).toList());
+
+    return result;
+}
+
+
 }
