@@ -45,8 +45,9 @@ public class SecurityConfig {
             // Public
             .requestMatchers(
                 "/", "/index.html",
-                "/frontend/**",
-                "/css/**", "/js/**", "/favicon.ico",
+                "/frontend/**",  
+                 "/assets/**", 
+                 "/favicon.ico",
                 "/h2-console/**",
                 "/api/auth/**",
                 "/api/tracker/simpan"
