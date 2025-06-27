@@ -29,7 +29,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // Jalankan hanya di halaman history
   if (window.location.pathname.includes("history.html")) {
     const chart = document.getElementById("ipkChartSection");
-    chart.style.display = "none";
+    chart.style.display = "block";
+    loadHistoryIPK();
   }
 });
 
@@ -156,35 +157,5 @@ function tampilkanChartIPK(data) {
   const labels = data.map((r) => `Semester ${r.semester}`);
   const values = data.map((r) => r.ipk);
 
-  new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels,
-      datasets: [{
-        label: "IPK per Semester",
-        data: values,
-        backgroundColor: "rgba(54, 162, 235, 0.6)",
-        borderColor: "rgba(54, 162, 235, 1)",
-        borderWidth: 1
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        title: {
-          display: true,
-          text: "Grafik IPK per Semester (Bar)"
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          max: 4,
-          ticks: {
-            stepSize: 0.5
-          }
-        }
-      }
-    }
-  });
+  
 }
