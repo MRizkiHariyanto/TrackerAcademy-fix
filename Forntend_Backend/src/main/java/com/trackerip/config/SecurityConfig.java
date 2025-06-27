@@ -1,6 +1,7 @@
 // src/main/java/com/trackerip/backend/config/SecurityConfig.java
 package com.trackerip.config;
 
+import com.trackerip.service.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,8 +15,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import com.trackerip.service.CustomUserDetailsService;
-
 @Configuration
 public class SecurityConfig {
 
@@ -25,7 +24,6 @@ public class SecurityConfig {
     @Autowired
     private CustomUserDetailsService userDetailsService;
 
-    // Provider autentikasi
     @Bean
     public DaoAuthenticationProvider authProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
@@ -42,7 +40,7 @@ public class SecurityConfig {
             .ignoringRequestMatchers(
                 "/h2-console/**",
                 "/api/auth/**",
-                "/api/tracker/simpan"  // hanya simpan yang public
+                "/api/tracker/simpan"
             )
         );
 
@@ -50,9 +48,9 @@ public class SecurityConfig {
         http.headers(headers -> headers.frameOptions(frame -> frame.disable()));
 
         // 3. Konfigurasi akses endpoint
-http.authorizeHttpRequests(auth -> auth
+        http.authorizeHttpRequests(auth -> auth
 
-            // PUBLIC
+            // PUBLIC endpoints
             .requestMatchers(
                 "/", "/index.html",
                 "/frontend/**",
@@ -62,14 +60,15 @@ http.authorizeHttpRequests(auth -> auth
                 "/api/tracker/simpan"
             ).permitAll()
 
-            // PROTECTED (hanya bisa diakses jika login)
+            // PROTECTED endpoints
             .requestMatchers(
+                "/api/modules/search",             // ✅ Tambahkan di sini
                 "/api/tracker/semua",
                 "/api/tracker/hapus/**",
                 "/api/tracker/history"
             ).authenticated()
 
-            // LAINNYA
+            // Semua lainnya ditolak
             .anyRequest().denyAll()
         );
 
@@ -81,13 +80,11 @@ http.authorizeHttpRequests(auth -> auth
         return http.build();
     }
 
-    // Manager untuk login
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
-    // Password encoder
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

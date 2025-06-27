@@ -1,93 +1,107 @@
-// modul //
+// ================== MODUL ==================
 const input = document.querySelector(".search-box input");
-      const resultContainer = document.getElementById("search-result");
-      const resultCount = document.getElementById("result-count");
-    
-      input.addEventListener("keyup", async function (e) {
-        const keyword = e.target.value.trim();
-        if (keyword.length < 2) {
-          resultContainer.innerHTML = "";
-          resultCount.textContent = "";
-          return;
-        }
-    
-        try {
-          const response = await fetch(`http://localhost:8088/api/modules/search?keyword=${keyword}`);
-          const modules = await response.json();
-    
-          resultContainer.innerHTML = "";
-          resultCount.textContent = `${modules.length} Result`;
-    
-          modules.forEach(modul => {
-            resultContainer.innerHTML += `
-              <a href="#" class="list-group-item list-group-item-action">
-                <h6 class="fw-bold mb-1 text-purple">${modul.judul}</h6>
-                <small class="d-block text-muted">${modul.penulis} • ${modul.tanggal}</small>
-                <small class="text-muted"><i class="bi bi-book"></i> ${modul.jumlahDibaca}x dibaca</small>
-              </a>
-            `;
-          });
-        } catch (err) {
-          resultContainer.innerHTML = `<div class="text-danger">Gagal mengambil data</div>`;
-          console.error("Fetch error:", err);
-        }
-      });
+const resultContainer = document.getElementById("search-result");
+const resultCount = document.getElementById("result-count");
 
-        async function loadStatistik() {
-          try {
-            const response = await fetch("http://localhost:8080/api/statistik");
-            const data = await response.json();
+input?.addEventListener("keyup", async function (e) {
+  const keyword = e.target.value.trim();
+  if (keyword.length < 2) {
+    if (resultContainer) resultContainer.innerHTML = "";
+    if (resultCount) resultCount.textContent = "";
+    return;
+  }
 
-            document.getElementById("modulCount").textContent = data.modul;
-            document.getElementById("matkulCount").textContent = data.matkul;
-            document.getElementById("dibacaCount").textContent = data.dibaca + "x";
-          } catch (err) {
-            console.error("Gagal memuat statistik", err);
-          }
-        }
+  const rawToken = localStorage.getItem("token");
+  const token = rawToken?.startsWith("Bearer ") ? rawToken : `Bearer ${rawToken}`;
 
-        loadStatistik();
-
-
-        document.getElementById("searchForm").addEventListener("submit", function (e) {
-          e.preventDefault();
-          const keyword = document.getElementById("searchInput").value.trim();
-          if (keyword.length > 0) {
-            window.location.href = `search-result.html?keyword=${encodeURIComponent(keyword)}`;
-          }
-        });
-
-    // search result //
-    const urlParams = new URLSearchParams(window.location.search);
-    const keyword = urlParams.get("keyword");
-
-    document.getElementById("search-title").textContent = `${keyword}`;
-
-    async function fetchModules() {
-      try {
-        const res = await fetch(`http://localhost:8080/api/modules/search?keyword=${keyword}`);
-        const data = await res.json();
-
-        const container = document.getElementById("search-result");
-        const counter = document.getElementById("result-count");
-        counter.textContent = `${data.length} hasil ditemukan`;
-
-        data.forEach(modul => {
-          container.innerHTML += `
-            <a href="#" class="list-group-item list-group-item-action">
-              <h6 class="fw-bold mb-1 text-purple">${modul.judul}</h6>
-              <small class="d-block text-muted">${modul.penulis} • ${modul.tanggal}</small>
-              <small class="text-muted"><i class="bi bi-book"></i> ${modul.jumlahDibaca}x dibaca</small>
-            </a>
-          `;
-        });
-      } catch (err) {
-        document.getElementById("search-result").innerHTML = `<div class="text-danger">Gagal memuat data</div>`;
-        console.error(err);
+  try {
+    const response = await fetch(`http://localhost:8080/api/modules/search?keyword=${encodeURIComponent(keyword)}`, {
+      method: "GET",
+      headers: {
+        "Authorization": token,
+        "Content-Type": "application/json"
       }
+    });
+
+    if (!response.ok) throw new Error("Gagal mengambil data dari server");
+
+    const modules = await response.json();
+    if (resultContainer) {
+      resultContainer.innerHTML = "";
+      modules.forEach(modul => {
+        resultContainer.innerHTML += `
+          <a href="${modul.linkDrive}" target="_blank" class="list-group-item list-group-item-action">
+            <h6 class="fw-bold mb-1 text-purple">${modul.judul}</h6>
+            <small class="d-block text-muted">${modul.penulis} • ${modul.tanggal}</small>
+            <small class="text-muted"><i class="bi bi-book"></i> ${modul.jumlahDibaca}x dibaca</small>
+          </a>
+        `;
+      });
     }
 
-    if (keyword) fetchModules();
+    if (resultCount) resultCount.textContent = `${modules.length} Result`;
 
+  } catch (err) {
+    console.error("Fetch error:", err);
+    if (resultContainer) resultContainer.innerHTML = `<div class="text-danger">Gagal mengambil data</div>`;
+  }
+});
 
-  // history //
+// ================== FORM SEARCH (Redirect) ==================
+document.getElementById("searchForm")?.addEventListener("submit", function (e) {
+  e.preventDefault();
+  const keyword = document.getElementById("searchInput").value.trim();
+  if (keyword.length > 0) {
+    window.location.href = `search-result.html?keyword=${encodeURIComponent(keyword)}`;
+  }
+});
+
+// ================== HALAMAN search-result ==================
+const urlParams = new URLSearchParams(window.location.search);
+const keyword = urlParams.get("keyword");
+
+if (keyword) {
+  const searchTitle = document.getElementById("search-title");
+  if (searchTitle) searchTitle.textContent = `${keyword}`;
+  fetchModules();
+}
+
+async function fetchModules() {
+  const rawToken = localStorage.getItem("token");
+  const token = rawToken?.startsWith("Bearer ") ? rawToken : `Bearer ${rawToken}`;
+
+  try {
+    const res = await fetch(`http://localhost:8080/api/modules/search?keyword=${encodeURIComponent(keyword)}`, {
+      method: "GET",
+      headers: {
+        "Authorization": token,
+        "Content-Type": "application/json"
+      }
+    });
+
+    if (!res.ok) throw new Error("Gagal fetch dari server");
+
+    const data = await res.json();
+    const container = document.getElementById("search-result");
+    const counter = document.getElementById("result-count");
+
+    if (counter) counter.textContent = `${data.length} hasil ditemukan`;
+    if (container) {
+      container.innerHTML = "";
+      data.forEach(modul => {
+        container.innerHTML += `
+          <a href="${modul.linkDrive}" target="_blank" class="list-group-item list-group-item-action">
+            <h6 class="fw-bold mb-1 text-purple">${modul.judul}</h6>
+            <small class="d-block text-muted">${modul.penulis} • ${modul.tanggal}</small>
+            <small class="text-muted"><i class="bi bi-book"></i> ${modul.jumlahDibaca}x dibaca</small>
+          </a>
+        `;
+      });
+    }
+
+  } catch (err) {
+    console.error(err);
+    const container = document.getElementById("search-result");
+    if (container) container.innerHTML = `<div class="text-danger">Gagal memuat data</div>`;
+  }
+}
