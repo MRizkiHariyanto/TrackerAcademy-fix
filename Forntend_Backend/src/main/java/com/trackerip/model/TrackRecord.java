@@ -29,6 +29,7 @@ public class TrackRecord {
         orphanRemoval = true,
         fetch = FetchType.EAGER // ✅ ambil langsung data matkul saat load TrackRecord
     )
+    
     @JoinColumn(name = "track_record_id") // foreign key di tabel mata_kuliah
     @JsonManagedReference // ✅ supaya bisa dikirim ke frontend tanpa loop
     private List<MataKuliah> matkul;

@@ -1,43 +1,64 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Statistik Semester</title>
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
-    body {
-      font-family: sans-serif;
-      background: white;
-      margin: 20px;
+    .text-pink {
+      color: #d63384;
     }
-    .chart-wrapper {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+    canvas {
+      max-width: 100%;
+      height: auto;
     }
-    .donut-container {
-      width: 200px;
+    .donut-wrapper {
+      position: relative;
+      height: 250px;
+      width: 250px;
+      margin: auto;
     }
-    .bar-container {
-      flex: 1;
+    #ipk-value {
+      position: absolute;
+      top: 70%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2rem;
+      font-weight: bold;
+      color: #2b003b;
     }
   </style>
 </head>
 <body>
-  <a href="history.html">← Back</a>
-  <h2 style="color: #d63384;">Your Stats</h2>
-  <h4 id="semesterTitle">Semester</h4>
-
-  <div class="chart-wrapper">
-    <div class="donut-container">
-      <canvas id="donutChart"></canvas>
+  
+  <div class="container mt-5">
+    <div class="container-header d-flex">
+      <a href="history.html">
+        <img src="assets/img/back.png" alt="Back" style="height: 28px; filter: invert(26%) sepia(89%) saturate(7491%) hue-rotate(286deg);">
+      </a>
+      <h4 class="text-pink fw-bold mb-0 ms-3">Statistik IP</h4>
     </div>
-    <div class="bar-container">
-      <canvas id="barChart"></canvas>
+    <div class="row align-items-center mt-4">
+      <!-- Donut -->
+      <div class="col-12 col-md-6 mb-4">
+        <div class="donut-wrapper">
+          <h2 class="text-center text-pink fw-bold" id="semesterTitle">Semester</h2>
+          <canvas id="donutChart"></canvas>
+          <div id="ipk-value">0.00</div>
+        </div>
+      </div>
+
+      <!-- Bar Chart -->
+      <div class="col-12 col-md-6">
+        <canvas id="barChartMatkul" height="300"></canvas>
+      </div>
     </div>
   </div>
-
   <script src="assets/js/statistik.js"></script>
-
-</body>
 </html>

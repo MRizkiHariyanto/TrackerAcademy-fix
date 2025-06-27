@@ -65,7 +65,8 @@ public class SecurityConfig {
                 "/api/modules/search",             // ✅ Tambahkan di sini
                 "/api/tracker/semua",
                 "/api/tracker/hapus/**",
-                "/api/tracker/history"
+                "/api/tracker/history",
+                "/api/tracker/statistik"
             ).authenticated()
 
             // Semua lainnya ditolak
