@@ -1,7 +1,14 @@
+// Ambil semester dari URL
 const params = new URLSearchParams(window.location.search);
 const semester = params.get("semester");
-document.getElementById("semesterTitle").textContent = `Semester ${semester}`;
 
+// Update judul semester di halaman
+const semesterTitle = document.getElementById("semesterTitle");
+if (semesterTitle) {
+  semesterTitle.textContent = `Semester ${semester}`;
+}
+
+// Fetch statistik dari backend
 async function fetchStatistik() {
   try {
     const res = await fetch(`http://localhost:8080/api/tracker/statistik?semester=${semester}`, {
@@ -10,14 +17,11 @@ async function fetchStatistik() {
       }
     });
 
-    const data = await res.json();
-    console.log("DATA DITERIMA:", data); // ✅ Sudah bagus
+    const data = await res.json(); // { ipk: ..., matkul: [{ nama: "", nilai: ... }] }
 
-    // ========== MULAI DI SINI ==========
-    // IPK Semester Aktif
-    const ipk = parseFloat(data.ipk).toFixed(2);
-    document.getElementById("ipk-value").textContent = ipk;
-    // Donut Chart IPK Semester
+    // 🟣 Donut Chart untuk IPK
+    const ipk = parseFloat(data.ipk);
+
     new Chart(document.getElementById("donutChart"), {
       type: "doughnut",
       data: {
@@ -28,14 +32,26 @@ async function fetchStatistik() {
         }]
       },
       options: {
-        cutout: "70%",
-        plugins: { legend: { display: false }, tooltip: { enabled: false } }
+        cutout: "75%",
+        plugins: {
+          legend: { display: false },
+          tooltip: { enabled: false }
+        }
       }
     });
 
-    // Bar Chart Nilai per Mata Kuliah
-    const labels = data.matkul.map(m => m.matkul);
+    // Tampilkan IPK di tengah lingkaran
+    const ipkValue = document.getElementById("ipk-value");
+    if (ipkValue) {
+      ipkValue.textContent = ipk.toFixed(2);
+    }
+
+    // 📊 Bar Chart untuk Nilai per Mata Kuliah
+    const labels = data.matkul.map(m => m.nama);
     const nilai = data.matkul.map(m => m.nilai);
+
+    console.log("Labels:", labels);
+    console.log("Nilai:", nilai);
 
     new Chart(document.getElementById("barChartMatkul"), {
       type: "bar",
@@ -53,6 +69,7 @@ async function fetchStatistik() {
             min: 0,
             max: 4,
             ticks: {
+              stepSize: 0.5,
               callback: function (value) {
                 if (value == 4) return "A";
                 if (value == 3.5) return "AB";
@@ -60,44 +77,23 @@ async function fetchStatistik() {
                 if (value == 2.5) return "BC";
                 if (value == 2) return "C";
                 if (value == 1) return "D";
-                return "E";
+                if (value == 0) return "E";
+                return "";
               }
             }
           }
+        },
+        plugins: {
+          legend: { display: true }
         }
       }
     });
 
   } catch (err) {
     alert("Gagal memuat data");
-    console.error(err);
+    console.error("Error fetching statistik:", err);
   }
 }
 
-  
-    
-fetchStatistik();
-
-// === Bar Chart IPK Rata-rata per Semester ===
-const ipkData = JSON.parse(localStorage.getItem("ipkData") || "[]");
-const ipkRata = parseFloat(localStorage.getItem("ipkRata") || 0).toFixed(2);
-document.getElementById("ipk-rerata").textContent = ipkRata;
-
-const labels = ipkData.map(d => `S${d.semester}`);
-const values = ipkData.map(d => d.ipk);
-
-new Chart(document.getElementById("barChartIpk"), {
-  type: "bar",
-  data: {
-    labels: labels,
-    datasets: [{
-      label: "IPK",
-      data: values,
-      backgroundColor: "#D732A8"
-    }]
-  },
-  options: {
-    scales: { y: { min: 0, max: 4 } },
-    plugins: { legend: { display: false } }
-  }
-});
+// Jalankan saat halaman selesai dimuat
+document.addEventListener("DOMContentLoaded", fetchStatistik);

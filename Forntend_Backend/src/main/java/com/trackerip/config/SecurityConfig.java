@@ -1,4 +1,3 @@
-// src/main/java/com/trackerip/backend/config/SecurityConfig.java
 package com.trackerip.config;
 
 import com.trackerip.service.CustomUserDetailsService;
@@ -35,22 +34,15 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filter(HttpSecurity http) throws Exception {
 
-        // 1. Nonaktifkan CSRF hanya untuk endpoint publik
-        http.csrf(csrf -> csrf
-            .ignoringRequestMatchers(
-                "/h2-console/**",
-                "/api/auth/**",
-                "/api/tracker/simpan"
-            )
-        );
+        // ✅ 1. Nonaktifkan CSRF sepenuhnya (karena pakai JWT)
+        http.csrf(csrf -> csrf.disable());
 
-        // 2. Izinkan akses frame H2 console
+        // 2. Izinkan akses ke H2 Console
         http.headers(headers -> headers.frameOptions(frame -> frame.disable()));
 
-        // 3. Konfigurasi akses endpoint
+        // 3. Konfigurasi endpoint
         http.authorizeHttpRequests(auth -> auth
-
-            // PUBLIC endpoints
+            // Public
             .requestMatchers(
                 "/", "/index.html",
                 "/frontend/**",
@@ -60,12 +52,13 @@ public class SecurityConfig {
                 "/api/tracker/simpan"
             ).permitAll()
 
-            // PROTECTED endpoints
+            // Protected
             .requestMatchers(
-                "/api/modules/search",             // ✅ Tambahkan di sini
+                "/api/modules/search",
                 "/api/tracker/semua",
                 "/api/tracker/hapus/**",
                 "/api/tracker/history",
+                "/api/tracker/history/**",  // 🛡️ Termasuk DELETE
                 "/api/tracker/statistik"
             ).authenticated()
 
@@ -73,7 +66,7 @@ public class SecurityConfig {
             .anyRequest().denyAll()
         );
 
-        // 4. Gunakan JWT (stateless)
+        // 4. Stateless JWT Auth
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         http.authenticationProvider(authProvider());
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

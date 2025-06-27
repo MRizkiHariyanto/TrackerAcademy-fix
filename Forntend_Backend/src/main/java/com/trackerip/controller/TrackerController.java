@@ -3,13 +3,7 @@ package com.trackerip.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.trackerip.model.TrackRecord;
 import com.trackerip.model.TrackRequest;
@@ -45,10 +39,17 @@ public class TrackerController {
         List<TrackRecord> records = service.getAll(); // Sudah otomatis ambil user login
         return ResponseEntity.ok(records);
     }
+
+    // Endpoint untuk statistik IPK per semester
     @GetMapping("/statistik")
     public ResponseEntity<?> getStatistik(@RequestParam int semester) {
         return ResponseEntity.ok(service.getStatistikBySemester(semester));
     }
 
-    
+    // ✅ Endpoint baru: hapus track record berdasarkan ID
+    @DeleteMapping("/history/{id}")
+    public ResponseEntity<?> deleteTrackRecord(@PathVariable Long id) {
+        service.deleteById(id);
+        return ResponseEntity.ok().build();
+    }
 }

@@ -21,6 +21,7 @@ import jakarta.transaction.Transactional;
 
 @Service
 public class TrackerService {
+
     @Autowired
     private TrackRecordRepository trackRecordRepo;
 
@@ -36,8 +37,7 @@ public class TrackerService {
     }
 
     public TrackRecord save(TrackRequest request) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String username = auth.getName();
+        String username = getCurrentUsername();
         User user = userRepository.findByUsername(username).orElseThrow();
 
         TrackRecord record = new TrackRecord();
@@ -49,46 +49,73 @@ public class TrackerService {
         return repository.save(record);
     }
 
-    @Transactional  // ⛏️ penting agar koleksi matkul tidak gagal saat dikonversi ke JSON
+    @Transactional
     public List<TrackRecord> getAll() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String username = auth.getName();
+        String username = getCurrentUsername();
         User user = userRepository.findByUsername(username).orElseThrow();
 
         return repository.findByUser(user);
     }
 
-    @Transactional  // ⛏️ untuk endpoint /history yang akses via username
+    @Transactional
     public List<TrackRecord> getAllTrackRecordsByUsername(String username) {
         return repository.findByUserUsername(username);
     }
 
     public Map<String, Object> getStatistikBySemester(int semester) {
-    Long userId = 1L; // sementara hardcoded dulu
+        String username = getCurrentUsername();
+        User user = userRepository.findByUsername(username).orElseThrow();
 
-    TrackRecord tr = trackRecordRepo.findBySemesterAndUserId(semester, userId)
-        .orElseThrow(() -> new RuntimeException("Track record tidak ditemukan"));
+        TrackRecord tr = trackRecordRepo.findBySemesterAndUserId(semester, user.getId())
+            .orElseThrow(() -> new RuntimeException("Track record tidak ditemukan"));
 
-    List<MataKuliah> matkulList = mataKuliahRepo.findByTrackRecordId(tr.getId());
+        List<MataKuliah> matkulList = mataKuliahRepo.findByTrackRecordId(tr.getId());
 
-    double totalNilai = 0;
-    int totalSks = 0;
-    for (MataKuliah mk : matkulList) {
-        totalNilai += mk.getNilai() * mk.getSks();
-        totalSks += mk.getSks();
+        double totalNilai = 0;
+        int totalSks = 0;
+        for (MataKuliah mk : matkulList) {
+            totalNilai += mk.getNilai() * mk.getSks();
+            totalSks += mk.getSks();
+        }
+
+        double ipk = (totalSks > 0) ? totalNilai / totalSks : 0;
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("ipk", ipk);
+        result.put("matkul", matkulList.stream().map(mk -> Map.of(
+            "nama", mk.getMatkul(),
+            "nilai", mk.getNilai()
+        )).toList());
+
+        return result;
     }
 
-    double ipk = (totalSks > 0) ? totalNilai / totalSks : 0;
+    // ✅ DELETE: Hapus track record by ID dengan validasi kepemilikan user
+    @Transactional
+    public void deleteById(Long id) {
+        String username = getCurrentUsername();
+        User user = userRepository.findByUsername(username).orElseThrow();
 
-    Map<String, Object> result = new HashMap<>();
-    result.put("ipk", ipk);
-    result.put("matkul", matkulList.stream().map(mk -> Map.of(
-        "nama", mk.getMatkul(),
-        "nilai", mk.getNilai()
-    )).toList());
+        System.out.println("🔍 Proses hapus IPK ID: " + id + " oleh user: " + username);
 
-    return result;
-}
+        TrackRecord record = trackRecordRepo.findById(id)
+            .orElseThrow(() -> new RuntimeException("❌ Track record tidak ditemukan: ID " + id));
 
+        if (!record.getUser().getId().equals(user.getId())) {
+            System.out.println("⚠️ Akses ditolak: user login bukan pemilik data");
+            throw new RuntimeException("Akses ditolak: data bukan milik kamu");
+        }
 
+        trackRecordRepo.deleteById(id);
+        System.out.println("✅ Berhasil menghapus track record dengan ID: " + id);
+    }
+
+    // 🔐 Helper untuk ambil username aktif dari JWT
+    private String getCurrentUsername() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || auth.getName() == null) {
+            throw new RuntimeException("User belum login atau token invalid");
+        }
+        return auth.getName();
+    }
 }
