@@ -64,6 +64,7 @@ function loadHistoryIPK() {
         alert("Belum ada data IPK tersimpan.");
         return;
       }
+      data.sort((a, b) => a.semester - b.semester);
       tampilkanCardDonutIPK(data);
       tampilkanChartIPK(data);
     })

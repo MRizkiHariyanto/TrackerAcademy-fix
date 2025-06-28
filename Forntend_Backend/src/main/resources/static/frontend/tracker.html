@@ -80,6 +80,9 @@
       border-radius: 10px;
       overflow: hidden;
     }
+    .modal-header{
+      background-color: #D732A8;
+    }
   </style>
 </head>
 <body>
@@ -153,12 +156,31 @@
       </div>
     </div>
   </div>
+  <!-- Modal: Semester Sudah Ada -->
+  <div class="modal fade" id="semesterExistsModal" tabindex="-1" aria-labelledby="semesterExistsLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg">
+        <div class="modal-header  text-white">
+          <h5 class="modal-title" id="semesterExistsLabel">Gagal Menyimpan</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-center">
+          <i class="bi bi-exclamation-triangle-fill text-danger fs-2 mb-3"></i>
+          <p class="fs-5 mb-0 text-dark">Semester ini sudah ada!<br>Silakan hapus data sebelumnya dulu.</p>
+        </div>
+        <div class="modal-footer justify-content-center">
+          <a href="history.html"><button type="button" class="btn btn-danger" data-bs-dismiss="modal">Oke, Mengerti</button></a>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <footer class="footer d-flex">
     <img class="logo mx-auto" src="assets/img/logo.png" alt="">
   </footer>
 
   <script src="assets/js/tracker.js"></script>
-
+  <script src="bootstrap-5.0.2-dist/js/bootstrap.min.js"></script>
 
 
 </body>

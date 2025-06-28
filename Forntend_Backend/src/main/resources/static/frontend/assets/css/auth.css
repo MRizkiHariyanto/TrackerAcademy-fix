@@ -237,3 +237,100 @@ a {
     margin: 15px 0;
 }
 
+@media (max-width: 900px) {
+    .container {
+        width: 100%;
+        border-radius: 20px;
+        flex-direction: column;
+        min-height: 600px;
+        height: auto;
+    }
+
+    .form-container {
+        width: 100%;
+        position: relative;
+        opacity: 1 !important;
+        transform: none !important;
+        z-index: 5;
+    }
+
+    .sign-in-container,
+    .sign-up-container {
+        opacity: 1 !important;
+    }
+
+    .overlay-container {
+        display: none;
+    }
+
+    form {
+        padding: 40px 30px;
+        align-items: center;
+    }
+
+    button {
+        width: 100%;
+    }
+
+    input {
+        font-size: 16px;
+    }
+
+    .back {
+        justify-content: center;
+    }
+
+    footer img {
+        width: 10rem;
+    }
+}
+/* Modal background */
+.custom-modal {
+    display: none; /* hidden by default */
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5); /* semi transparent black */
+    animation: fadeIn 0.3s;
+  }
+  
+  /* Modal content */
+  .custom-modal-content {
+    background-color: #fff;
+    margin: 10% auto;
+    padding: 20px 30px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    animation: slideDown 0.3s;
+    text-align: center;
+  }
+  
+  /* Close button */
+  .custom-close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  
+  .custom-close:hover {
+    color: #e74c3c;
+  }
+  
+  @keyframes slideDown {
+    from { transform: translateY(-30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
