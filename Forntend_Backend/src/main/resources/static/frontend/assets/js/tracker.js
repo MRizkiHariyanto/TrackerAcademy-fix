@@ -115,28 +115,48 @@ simpanBtn.addEventListener("click", async function () {
     return;
   }
 
-  let totalBobot = 0;
-  let totalSks = 0;
-  dataMatkul.forEach(item => {
-    totalBobot += item.sks * item.nilai;
-    totalSks += item.sks;
-  });
-
-  const ipk = totalSks ? (totalBobot / totalSks) : 0;
-  const payload = {
-    semester: parseInt(semester),
-    ipk: parseFloat(ipk.toFixed(2)),
-    matkul: dataMatkul
-  };
-
   const token = localStorage.getItem("token");
   if (!token) {
     alert("Kamu harus login untuk menyimpan data.");
     return;
   }
 
+  // ✅ Cek apakah semester ini sudah ada di history
   try {
-    const res = await fetch("http://localhost:8080/api/tracker/simpan", {
+    const res = await fetch("http://localhost:8080/api/tracker/history", {
+      headers: {
+        Authorization: "Bearer " + token,
+      },
+    });
+
+    if (!res.ok) throw new Error("Gagal mengambil data history.");
+
+    const existingData = await res.json();
+    const sudahAda = existingData.some(item => item.semester == semester);
+
+    if (sudahAda) {
+      const modal = new bootstrap.Modal(document.getElementById("semesterExistsModal"));
+      modal.show();
+      return;
+    }
+    
+
+    // ✅ Lanjut simpan karena semester belum ada
+    let totalBobot = 0;
+    let totalSks = 0;
+    dataMatkul.forEach(item => {
+      totalBobot += item.sks * item.nilai;
+      totalSks += item.sks;
+    });
+
+    const ipk = totalSks ? (totalBobot / totalSks) : 0;
+    const payload = {
+      semester: parseInt(semester),
+      ipk: parseFloat(ipk.toFixed(2)),
+      matkul: dataMatkul
+    };
+
+    const simpanRes = await fetch("http://localhost:8080/api/tracker/simpan", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -145,15 +165,14 @@ simpanBtn.addEventListener("click", async function () {
       body: JSON.stringify(payload)
     });
 
-    if (!res.ok) {
-      const text = await res.text();
+    if (!simpanRes.ok) {
+      const text = await simpanRes.text();
       console.error("Error detail dari backend:", text);
       throw new Error(text);
     }
 
-    const result = await res.json();
+    const result = await simpanRes.json();
     alert("Berhasil menyimpan track akademik!");
-    console.log(result);
     dataMatkul = [];
     updateTable();
     updateChart();
